@@ -1,0 +1,45 @@
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT CHECK(role IN ('regular', 'admin')) NOT NULL DEFAULT 'regular',
+    credits INTEGER NOT NULL DEFAULT 20,
+    last_credit_reset DATE NOT NULL
+);
+
+CREATE TABLE documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    filename TEXT NOT NULL,
+    upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE scans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    document_id INTEGER NOT NULL,
+    scan_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    credits_used INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (document_id) REFERENCES documents(id)
+);
+
+CREATE TABLE credit_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    request_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT CHECK(status IN ('pending', 'approved', 'denied')) NOT NULL DEFAULT 'pending',
+    credits_requested INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL,
+    matched_document_id INTEGER NOT NULL,
+    similarity_score REAL NOT NULL,
+    match_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES documents(id),
+    FOREIGN KEY (matched_document_id) REFERENCES documents(id)
+);
