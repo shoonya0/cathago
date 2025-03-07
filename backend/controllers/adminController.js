@@ -1,4 +1,4 @@
-const db = require("../models/userModel");
+const db = require("../models/models");
 
 exports.getAnalytics = (req, res) => {
   db.all(

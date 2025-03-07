@@ -24,6 +24,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 24 * 60 * 60 * 1000 },
+    httpOnly: true,
   })
 );
 
@@ -39,8 +40,8 @@ const roleMiddleware = require("./middlewares/roleMiddleware");
 app.use("/credits", roleMiddleware, creditRoutes);
 app.use("/admin", roleMiddleware, adminRoutes);
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "public", "index.html"));
+// });
 
 module.exports = app;

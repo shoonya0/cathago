@@ -1,8 +1,8 @@
-const db = require("../models/userModel");
+const db = require("../models/models");
 
 // Get user profile and credits
 exports.getUserProfile = (req, res) => {
-  const userId = req.session.userId;
+  const userId = req.session.user.id;
   db.get(
     `SELECT id, username, credits, last_credit_reset FROM users WHERE id = ?`,
     [userId],
@@ -37,7 +37,7 @@ exports.getUserProfile = (req, res) => {
 
 // Get past scans for the user
 exports.getUserScans = (req, res) => {
-  const userId = req.userId; // Assuming userId is set in the auth middleware
+  const userId = req.session.user.id; // Assuming userId is set in the auth middleware
 
   db.all(
     `SELECT * FROM documents WHERE user_id = ?`,

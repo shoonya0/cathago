@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const db = require("../models/userModel");
+const db = require("../models/models");
 const ErrorHandler = require("../middlewares/errorHandler");
 
 exports.register = (req, res) => {
@@ -71,9 +71,14 @@ exports.login = (req, res) => {
         id: user.id,
         username: user.username,
         role: user.role,
-        token: (token = jwt.sign({ id: user.id, role: user.role }, "secret", {
-          expiresIn: 86400,
-        })),
+        token: (token = jwt.sign(
+          { id: user.id, role: user.role, name: user.username },
+          "secret",
+          {
+            expiresIn: Math.floor(Date.now() / 1000) + 86400,
+          }
+        )),
+        // expiresIn: Math.floor(Date.now() / 1000) + 86400,
       };
 
       res.status(200).json({
@@ -83,6 +88,7 @@ exports.login = (req, res) => {
           username: user.username,
           role: user.role,
         },
+        token: token,
       });
     });
   });
