@@ -3,6 +3,14 @@ const jwt = require("jsonwebtoken");
 module.exports = (req, res, next) => {
   // check if the token is already in the session cookie then match the token with the user request this part is left
 
+  // let data = "";
+  // req.on("data", (chunk) => {
+  //   data += chunk;
+  // });
+  // req.on("end", () => {
+  //   console.log(data);
+  // });
+
   // if user is already logged in, skip the token verification
   if (req.session.user != null) {
     // recover expire time from the token

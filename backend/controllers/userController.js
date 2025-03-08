@@ -48,3 +48,15 @@ exports.getUserScans = (req, res) => {
     }
   );
 };
+
+exports.requestCredit = (req, res) => {
+  const userId = req.session.user.id;
+  db.run(
+    `INSERT INTO credit_requests (user_id, status) VALUES (?, 'pending')`,
+    [userId],
+    function (err) {
+      if (err) return res.status(500).send("Error requesting credit.");
+      res.status(200).send("Credit request sent.");
+    }
+  );
+};

@@ -10,33 +10,49 @@ exports.getAnalytics = (req, res) => {
       db.all(`SELECT * FROM users`, [], (err, users) => {
         if (err) return res.status(500).send("Error fetching users.");
 
-        const analytics = {
-          totalScans: scanData.length,
-          users: users.map((user) => ({
-            id: user.id,
-            username: user.username,
-            credits: user.credits,
-            scanCount:
-              scanData.find((scan) => scan.user_id === user.id)?.scan_count ||
-              0,
-          })),
-        };
+        // var analytics = {
+        //   totalScans: scanData.length,
+        //   users: users.map((user) => ({
+        //     id: user.id,
+        //     username: user.username,
+        //     credits: user.credits,
+        //     scanCount:
+        //       scanData.find((scan) => scan.user_id === user.id)?.scan_count ||
+        //       0,
+        //   })),
+        // };
 
-        res.status(200).json(analytics);
+        db.all(`SELECT * FROM credit_requests`, [], (err, creditRequests) => {
+          if (err)
+            return res.status(500).send("Error fetching credit requests.");
+          analytics.creditRequests = creditRequests;
+          res.status(200).json(analytics);
+        });
       });
     }
   );
 };
 
 exports.approveCreditRequest = (req, res) => {
-  const { requestId } = req.body;
-
+  // i want to get an array of all the credit requests that are going to be approved
+  // and then update the status of the credit requests to approved
+  // and then update the credits of the user
+  const { requestIds } = req.body;
   db.run(
-    `UPDATE credit_requests SET status = 'approved' WHERE id = ?`,
-    [requestId],
-    function (err) {
-      if (err) return res.status(500).send("Error approving credit request.");
-      res.status(200).send("Credit request approved.");
+    `UPDATE credit_requests SET status = 'approved' WHERE id IN (${requestIds
+      .map(() => "?")
+      .join(",")})`,
+    requestIds,
+    (err) => {
+      if (err) return res.status(500).send("Error approving credit requests.");
     }
   );
+  db.run(
+    `UPDATE users SET credits = credits + 20 WHERE id = ?`,
+    [requestIds.length, requestIds[0]],
+    (err) => {
+      if (err) return res.status(500).send("Error updating user credits.");
+    }
+  );
+  res.status(200).send("Credit requests approved.");
 };

@@ -9,7 +9,7 @@ exports.uploadDocument = (req, res) => {
   let textFileData = "";
 
   req.on("data", (chunk) => {
-    textFileData += chunk.toString();
+    textFileData += chunk;
   });
 
   req.on("end", () => {
@@ -20,7 +20,7 @@ exports.uploadDocument = (req, res) => {
     // extract the text file data from the textFileData
     const parts = textFileData.split(`--${boundary}`);
     const filePart = parts.find((part) =>
-      part.includes('Content-Disposition: form-data; name="file"')
+      part.includes('Content-Disposition: form-data; name="document"')
     );
 
     if (!filePart) {
@@ -37,90 +37,22 @@ exports.uploadDocument = (req, res) => {
     // to find the file name
     const fileName = filePart.split("filename=")[1].split(".")[0];
 
-    // Check if user has credits
-    db.get("SELECT * FROM users WHERE id = ?", [userId], (err, user) => {
-      if (err) {
-        return res.status(500).json({ error: "Database error" });
-      }
-      if (!user || user.credits <= 0) {
-        return res.status(403).json({ error: "No credits available" });
-      }
-      // Save document to database
-      db.run(
-        `INSERT INTO documents (user_id, filename, filepath, content) VALUES (?, ?, ?, ?)`,
-        [userId, fileName, "../frontend/uploadFiles", fileContent],
-        function (err) {
-          if (err) {
-            return res.status(500).json({ error: "Error saving document" });
-          }
-          const documentId = this.lastID;
-          // Record the scan
-          db.run(
-            `INSERT INTO scans (user_id, document_id, credits_used) VALUES (?, ?, 1)`,
-            [userId, documentId],
-            (err) => {
-              if (err) {
-                return res.status(500).json({ error: "Error recording scan" });
-              }
-
-              return res.status(200).json({
-                message: "Document uploaded successfully",
-                documentId: documentId,
-              });
-              // Deduct credit
-              // db.run(
-              //   `UPDATE users SET credits = credits - 1 WHERE id = ?`,
-              //   [userId],
-              //   (err) => {
-              //     if (err) {
-              //       return res
-              //         .status(500)
-              //         .json({ error: "Error updating user credits" });
-              //     }
-              //     // Find matching documents
-              //     db.all(
-              //       `SELECT id, user_id, filename, content FROM documents WHERE id != ? AND user_id = ?`,
-              //       [documentId, userId],
-              //       (err, documents) => {
-              //         if (err) {
-              //           return res
-              //             .status(500)
-              //             .json({ error: "Error finding matches" });
-              //         }
-              //         // Calculate similarity for each document
-              //         const matches = documents.map((doc) => {
-              //           const similarity = calculateDocumentSimilarity(
-              //             content,
-              //             doc.content
-              //           );
-              //           return {
-              //             id: doc.id,
-              //             filename: doc.filename,
-              //             similarity: similarity,
-              //           };
-              //         });
-              //         // Sort by similarity (descending) and take top matches
-              //         const topMatches = matches
-              //           .filter((match) => match.similarity > 0.3) // Threshold for similarity
-              //           .sort((a, b) => b.similarity - a.similarity)
-              //           .slice(0, 5);
-              //         res.json({
-              //           message: "Document scanned successfully",
-              //           document: {
-              //             id: documentId,
-              //             filename: req.file.originalname,
-              //           },
-              //           matches: topMatches,
-              //         });
-              //       }
-              //     );
-              //   }
-              // );
-            }
-          );
+    // save document to the database
+    // Save document to database
+    db.run(
+      `INSERT INTO documents (user_id, filename, filepath, content) VALUES (?, ?, ?, ?)`,
+      [userId, fileName, "../frontend/uploadFiles", fileContent],
+      function (err) {
+        if (err) {
+          return res.status(500).json({ error: "Error saving document" });
         }
-      );
-    });
+        const documentId = this.lastID;
+        return res.status(200).json({
+          message: "Document uploaded successfully",
+          documentId: documentId,
+        });
+      }
+    );
   });
 };
 
@@ -151,17 +83,21 @@ exports.matchDocument = (req, res) => {
           }
 
           // Calculate similarity for each document
-          const matches = documents.map((doc) => {
-            const similarity = calculateDocumentSimilarity(
-              document.content,
-              doc.content
-            );
-            return {
-              id: doc.id,
-              filename: doc.filename,
-              similarity: similarity,
-            };
-          });
+          const matches = textMatching.findSimilarDocuments(
+            document.content,
+            documents
+          );
+          // const matches = documents.map((doc) => {
+          //   const similarity = textMatching.findSimilarDocuments(
+          //     document.content,
+          //     doc.content
+          //   );
+          //   return {
+          //     id: doc.id,
+          //     filename: doc.filename,
+          //     similarity: similarity,
+          //   };
+          // });
 
           // Sort by similarity (descending) and take top matches
           const topMatches = matches

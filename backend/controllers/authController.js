@@ -80,7 +80,6 @@ exports.login = (req, res) => {
         )),
         // expiresIn: Math.floor(Date.now() / 1000) + 86400,
       };
-
       res.status(200).json({
         message: "Login successful",
         user: {
