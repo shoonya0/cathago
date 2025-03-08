@@ -130,10 +130,7 @@ exports.matchDocument = (req, res) => {
 
   // Get the document
   db.get(
-    `
-        SELECT * FROM documents
-        WHERE id = ? AND user_id = ?
-      `,
+    `SELECT * FROM documents WHERE id = ? AND user_id = ?`,
     [docId, userId],
     (err, document) => {
       if (err) {
@@ -146,11 +143,7 @@ exports.matchDocument = (req, res) => {
 
       // Get all other documents from the user
       db.all(
-        `
-          SELECT id, filename, content
-          FROM documents
-          WHERE id != ? AND user_id = ?
-        `,
+        `SELECT id, filename, content FROM documents WHERE id != ? AND user_id = ?`,
         [docId, userId],
         (err, documents) => {
           if (err) {
